@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:learnify/auth/login_screen.dart';
+import 'package:learnify/auth/screens/login_screen.dart';
 import 'package:learnify/constants/colors.dart';
 import 'package:learnify/screens/home_screen.dart';
 
@@ -78,7 +78,7 @@ class StartScreen3 extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) {
-                      return LoginScreen();
+                      return GoogleLoginScreen();
                     },
                   ),
                 );

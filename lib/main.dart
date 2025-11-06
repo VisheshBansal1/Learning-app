@@ -1,7 +1,13 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:learnify/auth/screens/login_screen.dart';
+// import 'package:learnify/auth/screens/google_login_screen.dart';
+import 'package:learnify/firebase_options.dart';
 import 'package:learnify/screens/start_screens/onboarding_wrapper.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -18,7 +24,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF151022)),
       ),
-      home: OnboardingWrapper(),
+      home: GoogleLoginScreen(),
     );
   }
 }

@@ -12,7 +12,6 @@ class OnboardingWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: MyColors.mainColor,
-      
       body: Stack(
         alignment: Alignment.bottomCenter,
         children: [
@@ -37,6 +36,6 @@ class OnboardingWrapper extends StatelessWidget {
           ),
         ],
       ),
-    );
+    );  
   }
 }

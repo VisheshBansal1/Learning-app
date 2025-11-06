@@ -8,6 +8,30 @@
 	<string>Learnify</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
+	<!-- Google Sign-In Configuration -->
+
+	<!-- Add this near the top (inside the main <dict> tag) -->
+	<key>GIDClientID</key>
+	<!-- Copied from GoogleService-Info.plist key CLIENT_ID -->
+	<string>546277714389-melt3h7m56g2esm3snfrk0inrt0l4dgv.apps.googleusercontent.com</string>
+
+	<!-- Add this near the bottom (before the final </dict>) -->
+	<!-- Google Sign-In Section -->
+	<key>CFBundleURLTypes</key>
+	<array>
+  		<dict>
+    		<key>CFBundleTypeRole</key>
+    		<string>Editor</string>
+    		<key>CFBundleURLSchemes</key>
+    		<array>
+      			<!-- Copied from GoogleService-Info.plist key REVERSED_CLIENT_ID -->
+      			<string>com.googleusercontent.apps.546277714389-melt3h7m56g2esm3snfrk0inrt0l4dg
+				</string>
+    		</array>
+  		</dict>
+	</array>
+	<!-- End of Google Sign-In Section -->
+
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
