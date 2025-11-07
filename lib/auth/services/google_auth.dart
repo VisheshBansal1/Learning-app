@@ -8,6 +8,8 @@ class FirebaseServices {
 
   //Method to sign in using Google
   Future<bool> signInWithGoogle() async {
+    // ✅ always ask for account selection
+    await googleSignIn.signOut();
     try {
       final GoogleSignInAccount? googleSignInAccount = await GoogleSignIn()
           .signIn();
