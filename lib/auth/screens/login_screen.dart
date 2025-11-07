@@ -6,8 +6,6 @@ import 'package:learnify/auth/services/internet_con.dart';
 import 'package:learnify/constants/colors.dart';
 import 'package:learnify/screens/home_screen.dart';
 
-final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
-
 class GoogleLoginScreen extends StatefulWidget {
   const GoogleLoginScreen({super.key});
 
@@ -16,8 +14,12 @@ class GoogleLoginScreen extends StatefulWidget {
 }
 
 class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
+  final _auth = FirebaseAuth.instance;
+  final _formKey = GlobalKey<FormState>();
   final InternetChecker _checker = InternetChecker();
+
   bool isLoading = false;
+  bool _obscurePassword = true;
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -26,11 +28,6 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
   void initState() {
     super.initState();
     _checker.startListening();
-
-    // listen for Google account changes
-    _googleSignIn.onCurrentUserChanged.listen((account) {
-      if (mounted) setState(() {});
-    });
   }
 
   @override
@@ -41,30 +38,31 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
     super.dispose();
   }
 
-  // handle Google Sign-In
+  // ---------- Google Sign-In ----------
   Future<void> handleGoogleSignIn() async {
+    if (isLoading) return;
+
     setState(() => isLoading = true);
 
     try {
       bool result = await FirebaseServices().signInWithGoogle();
 
       if (result) {
-        User? user = FirebaseAuth.instance.currentUser;
+        User? user = _auth.currentUser;
 
         if (user != null && user.email != null) {
-          // 🔹 Check linked providers + backend methods
           final linkedProviders = user.providerData
               .map((p) => p.providerId)
               .toList();
-          final backendProviders = await FirebaseAuth.instance
-              .fetchSignInMethodsForEmail(user.email!);
+          final backendProviders = await _auth.fetchSignInMethodsForEmail(
+            user.email!,
+          );
 
           final hasPasswordLinked =
               linkedProviders.contains('password') ||
               backendProviders.contains('password');
 
           if (hasPasswordLinked) {
-            // ✅ Already has password — skip dialog
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -74,7 +72,6 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
               ),
             );
 
-            // go to HomeScreen directly
             if (context.mounted) {
               Navigator.pushReplacement(
                 context,
@@ -82,12 +79,10 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
               );
             }
           } else {
-            // 🆕 New user — ask to create password (compulsory)
             String? password = await showPasswordDialog(context);
 
             if (password == null || password.isEmpty) {
-              // 🚫 Cancelled or empty password → sign out and exit
-              await FirebaseAuth.instance.signOut();
+              await _auth.signOut();
               final GoogleSignIn googleSignIn = GoogleSignIn();
               await googleSignIn.signOut();
               await googleSignIn.disconnect();
@@ -102,7 +97,7 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
                   ),
                 );
               }
-              return; // Stop here, don’t go to home
+              return;
             }
 
             try {
@@ -114,10 +109,12 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
               );
 
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Password linked successfully!')),
+                const SnackBar(
+                  content: Text('Password linked successfully!'),
+                  backgroundColor: Colors.green,
+                ),
               );
 
-              // ✅ Now go to HomeScreen
               if (context.mounted) {
                 Navigator.pushReplacement(
                   context,
@@ -146,26 +143,22 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
           }
         }
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Google Sign-In was cancelled or failed'),
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google Sign-In was cancelled or failed'),
+          ),
+        );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
   }
 
-  // 🔹 Improved Password Dialog with Validation + Eye Toggle + Confirm Password
+  // ---------- Password Dialog ----------
   Future<String?> showPasswordDialog(BuildContext context) async {
     final TextEditingController passwordController = TextEditingController();
     final TextEditingController confirmController = TextEditingController();
@@ -267,7 +260,6 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
                     final password = passwordController.text.trim();
                     final confirm = confirmController.text.trim();
 
-                    // 🔹 Validation
                     if (password.isEmpty || confirm.isEmpty) {
                       setState(() => errorText = 'Please fill both fields');
                       return;
@@ -302,12 +294,60 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
     );
   }
 
+  // ---------- Email/Password Sign-In ----------
+  Future<void> handleEmailPasswordSignIn() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (isLoading) return;
+
+    setState(() => isLoading = true);
+
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    try {
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String message;
+
+      switch (e.code) {
+        case 'user-not-found':
+          message = 'No user found for this email.';
+          break;
+        case 'wrong-password':
+          message = 'Incorrect password.';
+          break;
+        case 'invalid-email':
+          message = 'Invalid email format.';
+          break;
+        case 'user-disabled':
+          message = 'This account has been disabled.';
+          break;
+        case 'too-many-requests':
+          message = 'Too many attempts. Try again later.';
+          break;
+        default:
+          message = 'Sign-in failed: ${e.code}';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+      );
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
-
-    final FirebaseAuth _auth = FirebaseAuth.instance;
 
     return Scaffold(
       backgroundColor: MyColors.mainColor,
@@ -322,7 +362,6 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // --- Header ---
               const CircleAvatar(
                 backgroundImage: AssetImage('assets/logos/App_logo.jpg'),
                 radius: 45,
@@ -348,13 +387,12 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
               ),
               SizedBox(height: height * 0.04),
 
-              // --- Google Sign In Button ---
+              // ---------- Google Sign-In ----------
               GestureDetector(
                 onTap: isLoading ? null : handleGoogleSignIn,
                 child: Card(
                   color: Colors.black45,
                   elevation: 8,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -366,8 +404,8 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.network(
-                          "https://img.favpng.com/11/1/15/google-logo-png-favpng-sdEUHqixZ3JpmUxbr41KhEU5g.jpg",
+                        Image.asset(
+                          'assets/icons/google-logo.jpg',
                           height: 28,
                           width: 28,
                         ),
@@ -378,7 +416,6 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
-                            letterSpacing: -0.3,
                           ),
                         ),
                       ],
@@ -389,7 +426,7 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
 
               SizedBox(height: height * 0.03),
 
-              // --- Divider ---
+              // ---------- Divider ----------
               Row(
                 children: [
                   Expanded(child: Container(height: 1, color: Colors.white54)),
@@ -404,277 +441,181 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
               ),
               SizedBox(height: height * 0.03),
 
-              // --- Email & Password Form ---
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Email Address",
-                    style: TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: emailController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: "Enter your email",
-                      hintStyle: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                      ),
-                      filled: true,
-                      fillColor: const Color(0xFF1E1C2A),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
+              // ---------- Email & Password Form ----------
+              Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Email Address",
+                      style: TextStyle(color: Colors.white),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "Password",
-                    style: TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: passwordController,
-                    obscureText: true,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: "Enter your password",
-                      hintStyle: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                      ),
-                      filled: true,
-                      fillColor: const Color(0xFF1E1C2A),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Forgot Password Button
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () async {
-                        final email = emailController.text.trim();
-
-                        if (email.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please enter your email first'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                          return;
-                        }
-
-                        try {
-                          try {
-                            //checking
-                            await FirebaseAuth.instance.sendPasswordResetEmail(
-                              email: email,
-                            );
-                            print("Password reset email sent to $email");
-                          } on FirebaseAuthException catch (e) {
-                            print(
-                              "Firebase error code: ${e.code}, message: ${e.message}",
-                            );
-                          } //
-
-                          await FirebaseAuth.instance.sendPasswordResetEmail(
-                            email: email,
-                          );
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Password reset email sent to $email',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        } on FirebaseAuthException catch (e) {
-                          String message;
-
-                          switch (e.code) {
-                            case 'user-not-found':
-                              message = 'No user found for this email.';
-                              break;
-                            case 'invalid-email':
-                              message = 'Invalid email format.';
-                              break;
-                            default:
-                              message = 'Failed to send reset link. Try again.';
-                          }
-
-                          ScaffoldMessenger.of(
-                            context,
-                          ).showSnackBar(SnackBar(content: Text(message)));
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: ${e.toString()}')),
-                          );
-                        }
-                      },
-                      child: const Text(
-                        "Forgot Password?",
-                        style: TextStyle(color: Color(0xFF9B8CFF)),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final email = emailController.text;
-                        final password = passwordController.text;
-
-                        if (email.isEmpty || password.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please fill in both fields'),
-                            ),
-                          );
-                          return;
-                        }
-
-                        try {
-                          // Try signing in
-                          await _auth.signInWithEmailAndPassword(
-                            email: email,
-                            password: password,
-                          );
-
-                          if (context.mounted) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const HomeScreen(),
-                              ),
-                            );
-                          }
-                        } on FirebaseAuthException catch (e) {
-                          String message;
-
-                          switch (e.code) {
-                            case 'user-not-found':
-                              message =
-                                  'No user found for this email. Please sign up first.';
-                              break;
-                            case 'wrong-password':
-                              message = 'Incorrect password. Please try again.';
-                              break;
-                            case 'invalid-email':
-                              message =
-                                  'Invalid email format. Please check your email.';
-                              break;
-                            case 'user-disabled':
-                              message =
-                                  'This account has been disabled by admin.';
-                              break;
-                            case 'too-many-requests':
-                              message =
-                                  'Too many failed attempts. Please wait a few minutes before retrying.';
-                              break;
-                            case 'invalid-credential':
-                              message =
-                                  'Invalid credentials. Please check your email and password.';
-                              break;
-                            default:
-                              message =
-                                  'Sign in failed. Please check your email and password.';
-                          }
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(message),
-                              backgroundColor: Colors.redAccent,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Error: ${e.toString()}'),
-                              backgroundColor: Colors.redAccent,
-                            ),
-                          );
-                        }
-                      },
-
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6C4DFF),
-                        shape: RoundedRectangleBorder(
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: "Enter your email",
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFF1E1C2A),
+                        border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
                         ),
                       ),
-                      child: const Text(
-                        "Sign In",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter email';
+                        } else if (!value.contains('@')) {
+                          return 'Invalid email format';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        "Don't have an account?",
-                        style: TextStyle(color: Colors.white54),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Password",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: passwordController,
+                      obscureText: _obscurePassword,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: "Enter your password",
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFF1E1C2A),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: Colors.white70,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                        ),
                       ),
-                      TextButton(
-                        onPressed: () {},
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter password';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+
+                    // ---------- Forgot Password ----------
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () async {
+                          final email = emailController.text.trim();
+
+                          if (email.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Enter email to reset password'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          try {
+                            await _auth.sendPasswordResetEmail(email: email);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Reset link sent to $email'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          } on FirebaseAuthException catch (e) {
+                            final message = e.code == 'user-not-found'
+                                ? 'No user found for this email.'
+                                : 'Failed to send reset link.';
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(message),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
+                        },
                         child: const Text(
-                          "Sign Up",
+                          "Forgot Password?",
                           style: TextStyle(color: Color(0xFF9B8CFF)),
                         ),
                       ),
+                    ),
+
+                    // ---------- Sign In Button ----------
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : handleEmailPasswordSignIn,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6C4DFF),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text(
+                          isLoading ? "Signing In..." : "Sign In",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Center(
+                child: Text.rich(
+                  TextSpan(
+                    text: "By continuing, you agree to Learnify’s ",
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    children: [
+                      TextSpan(
+                        text: "Terms of Service",
+                        style: const TextStyle(color: Color(0xFF9B8CFF)),
+                      ),
+                      const TextSpan(text: " and "),
+                      TextSpan(
+                        text: "Privacy Policy",
+                        style: const TextStyle(color: Color(0xFF9B8CFF)),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  Center(
-                    child: Text.rich(
-                      TextSpan(
-                        text: "By continuing, you agree to Learnify’s ",
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 12,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: "Terms of Service",
-                            style: const TextStyle(color: Color(0xFF9B8CFF)),
-                          ),
-                          const TextSpan(text: " and "),
-                          TextSpan(
-                            text: "Privacy Policy",
-                            style: const TextStyle(color: Color(0xFF9B8CFF)),
-                          ),
-                        ],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
           ),
