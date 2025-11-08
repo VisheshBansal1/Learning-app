@@ -1,5 +1,4 @@
-
-  import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:learnify/widgets/home_screen_widget/build_recommended_card.dart';
 
 Widget buildRecommended() {

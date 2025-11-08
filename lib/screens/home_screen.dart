@@ -6,6 +6,7 @@ import 'package:learnify/screens/home_tab.dart';
 import 'package:learnify/screens/leaderboard_screen.dart';
 import 'package:learnify/screens/notification_screen.dart';
 import 'package:learnify/screens/profile_screen.dart';
+import 'package:learnify/widgets/my_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -77,35 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-
-      drawer: Drawer(
-        backgroundColor: const Color(0xFF1A1A1A),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.deepPurpleAccent),
-              child: Center(
-                child: Text(
-                  'Learnify Menu',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            _drawerItem(Icons.home, 'Home'),
-            _drawerItem(Icons.school, 'My Courses'),
-            _drawerItem(Icons.star, 'Favorites'),
-            _drawerItem(Icons.person, 'Profile'),
-            _drawerItem(Icons.settings, 'Settings'),
-            _drawerItem(Icons.logout, 'Logout'),
-          ],
-        ),
-      ),
-
+      drawer: MyDrawer(),
       body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
@@ -170,14 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _drawerItem(IconData icon, String title) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.deepPurpleAccent),
-      title: Text(title, style: const TextStyle(color: Colors.white)),
-      onTap: () {},
     );
   }
 }
