@@ -1,11 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:learnify/auth/screens/login_screen.dart';
 import 'package:learnify/firebase_options.dart';
 import 'package:learnify/screens/home_screen.dart';
 import 'package:learnify/screens/start_screens/onboarding_wrapper.dart';
-import 'package:learnify/screens/start_screens/start_screen1.dart';
 import 'package:overlay_support/overlay_support.dart';
 
 void main() async {
@@ -17,7 +15,7 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override
+  @override 
   Widget build(BuildContext context) {
     return OverlaySupport.global(
       child: MaterialApp(

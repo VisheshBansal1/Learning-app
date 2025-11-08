@@ -1,73 +1,183 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:learnify/auth/screens/login_screen.dart';
+import 'package:learnify/constants/colors.dart';
+import 'package:learnify/screens/ai_tutor_screen.dart';
+import 'package:learnify/screens/courses_screen.dart';
+import 'package:learnify/screens/home_tab.dart';
+import 'package:learnify/screens/leaderboard_screen.dart';
+import 'package:learnify/screens/notification_screen.dart';
+import 'package:learnify/screens/profile_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  Future<void> _signOut(BuildContext context) async {
-    try {
-      // 🔹 Always sign out from Firebase first
-      await FirebaseAuth.instance.signOut();
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
-      // 🔹 Try signing out from Google, but ignore if not signed in via Google
-      final googleSignIn = GoogleSignIn();
-      if (await googleSignIn.isSignedIn()) {
-        try {
-          await googleSignIn.signOut();
-          await googleSignIn.disconnect();
-        } catch (e) {
-          debugPrint('⚠️ Google sign-out skipped: $e');
-        }
-      }
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
 
-      // 🔹 Navigate back to login screen no matter what
-      if (context.mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const GoogleLoginScreen()),
-          (route) => false,
-        );
+  final List<IconData> _icons = [
+    Icons.home_outlined,
+    Icons.school_outlined,
+    Icons.smart_toy_outlined,
+    Icons.leaderboard_outlined,
+    Icons.person_outline,
+  ];
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Signed out successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error signing out: ${e.toString()}'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    }
-  }
+  final List<String> _labels = [
+    'Home',
+    'Courses',
+    'AI Tutor',
+    'Leaderboard',
+    'Profile',
+  ];
+
+  final List<Widget> _screens = const [
+    HomeTab(),
+    CourseScreen(),
+    AITutorScreen(),
+    LeaderboardScreen(),
+    ProfileScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: MyColors.mainColor,
       appBar: AppBar(
-        title: const Text('Home Screen'),
+        backgroundColor: Colors.transparent,
+        title: Text(
+          _labels[_selectedIndex],
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _signOut(context),
-            tooltip: 'Sign Out',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return NotificationScreen();
+                  },
+                ),
+              );
+            },
+            icon: Icon(Icons.notifications),
           ),
         ],
       ),
-      body: const Center(
-        child: Text(
-          'Welcome to Home Screen!',
-          style: TextStyle(fontSize: 20),
+
+      drawer: Drawer(
+        backgroundColor: const Color(0xFF1A1A1A),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.deepPurpleAccent),
+              child: Center(
+                child: Text(
+                  'Learnify Menu',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            _drawerItem(Icons.home, 'Home'),
+            _drawerItem(Icons.school, 'My Courses'),
+            _drawerItem(Icons.star, 'Favorites'),
+            _drawerItem(Icons.person, 'Profile'),
+            _drawerItem(Icons.settings, 'Settings'),
+            _drawerItem(Icons.logout, 'Logout'),
+          ],
         ),
       ),
+
+      body: _screens[_selectedIndex],
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(25),
+            topRight: Radius.circular(25),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(_icons.length, (index) {
+              final isSelected = _selectedIndex == index;
+              return GestureDetector(
+                onTap: () {
+                  setState(() => _selectedIndex = index);
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelected
+                            ? Colors.deepPurpleAccent
+                            : Colors.transparent,
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: Colors.deepPurpleAccent,
+                                  blurRadius: 20,
+                                  spreadRadius: 2,
+                                ),
+                              ]
+                            : [],
+                      ),
+                      child: Icon(
+                        _icons[index],
+                        color: isSelected ? Colors.white : Colors.white70,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _labels[index],
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.white54,
+                        fontSize: 12,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerItem(IconData icon, String title) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.deepPurpleAccent),
+      title: Text(title, style: const TextStyle(color: Colors.white)),
+      onTap: () {},
     );
   }
 }

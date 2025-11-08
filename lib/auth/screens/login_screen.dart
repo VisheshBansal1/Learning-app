@@ -5,6 +5,7 @@ import 'package:learnify/auth/services/google_auth.dart';
 import 'package:learnify/auth/services/internet_con.dart';
 import 'package:learnify/constants/colors.dart';
 import 'package:learnify/screens/home_screen.dart';
+import 'package:learnify/screens/home_screen.dart' hide HomeScreen;
 
 class GoogleLoginScreen extends StatefulWidget {
   const GoogleLoginScreen({super.key});
