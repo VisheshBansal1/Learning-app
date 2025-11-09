@@ -1,93 +1,127 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:learnify/auth/screens/login_screen.dart';
+import 'package:learnify/widgets/profile_section_widgets/header_section.dart';
+import 'package:learnify/widgets/profile_section_widgets/section1.dart';
+import 'package:learnify/widgets/profile_section_widgets/section2.dart';
+import 'package:learnify/widgets/profile_section_widgets/section3.dart';
 
-class MyDrawer extends StatelessWidget {
+class MyDrawer extends StatefulWidget {
   const MyDrawer({super.key});
 
-Future<void> _signOut(BuildContext context) async {
-    try {
-      // 🔹 Always sign out from Firebase first
-      await FirebaseAuth.instance.signOut();
+  @override
+  State<MyDrawer> createState() => _MyDrawerState();
+}
 
-      // 🔹 Try signing out from Google, but ignore if not signed in via Google
-      final googleSignIn = GoogleSignIn();
-      if (await googleSignIn.isSignedIn()) {
-        try {
-          await googleSignIn.signOut();
-          await googleSignIn.disconnect();
-        } catch (e) {
-          debugPrint('⚠ Google sign-out skipped: $e');
-        }
-      }
+class _MyDrawerState extends State<MyDrawer> {
+  final _auth = FirebaseAuth.instance;
+  final _firestore = FirebaseFirestore.instance;
 
-      // 🔹 Navigate back to login screen no matter what
-      if (context.mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const GoogleLoginScreen()),
-          (route) => false,
-        );
-ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Signed out successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error signing out: ${e.toString()}'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+  String name = '';
+  String email = '';
+  String? imagePath;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final doc = await _firestore.collection('users').doc(user.uid).get();
+    if (doc.exists) {
+      final data = doc.data()!;
+      setState(() {
+        name = data['name'] ?? 'No Name';
+        email = user.email ?? 'No Email';
+        imagePath = data['profileImage'];
+      });
+    } else {
+      // If no user document, create a new one
+      await _firestore.collection('users').doc(user.uid).set({
+        'name': user.displayName ?? 'New User',
+        'email': user.email,
+        'profileImage': null,
+      });
+      _loadUserData();
     }
   }
 
+  void updateProfile(String newName, String newEmail, String? newImage) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
 
+    await _firestore.collection('users').doc(user.uid).update({
+      'name': newName,
+      'profileImage': newImage,
+    });
+
+    setState(() {
+      name = newName;
+      email = user.email ?? newEmail;
+      imagePath = newImage;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
-        backgroundColor: const Color(0xFF1A1A1A),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.cyanAccent, Colors.blueGrey, Colors.black38],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
         child: ListView(
-          padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.deepPurpleAccent),
-              child: Center(
-                child: Text(
-                  'Learnify Menu',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+            Column(
+              children: [
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back_ios_new),
+                    ),
+                    const Text(
+                      'My Profile',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.settings),
+                    ),
+                  ],
                 ),
-              ),
+                HeaderSection(
+                  name: name.isEmpty ? 'Loading...' : name,
+                  email: email.isEmpty ? 'Loading...' : email,
+                  imagePath: imagePath,
+                  onProfileUpdated: updateProfile,
+                ),
+                const SizedBox(height: 20),
+                const Section1(),
+                const Divider(color: Colors.white, indent: 20, endIndent: 20),
+                const Section2(),
+                const Divider(color: Colors.white, indent: 20, endIndent: 20),
+                const Section3(),
+                const Divider(color: Colors.white, indent: 20, endIndent: 20),
+                const SizedBox(height: 10),
+                const Center(child: Text('App Version: 0.0.1')),
+              ],
             ),
-            _drawerItem(Icons.home, 'Home'),
-            _drawerItem(Icons.school, 'My Courses'),
-            _drawerItem(Icons.star, 'Favorites'),
-            _drawerItem(Icons.person, 'Profile'),
-            _drawerItem(Icons.settings, 'Settings'),
-            _drawerItem(Icons.logout, 'Logout' ),
           ],
         ),
-      );
-  }
-}
-
-  Widget _drawerItem(IconData icon, String title) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.deepPurpleAccent),
-      title: Text(title, style: const TextStyle(color: Colors.white)),
-      onTap: () {
-
-      },
+      ),
     );
   }
+}

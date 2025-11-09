@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -5,7 +6,7 @@ import 'package:learnify/auth/services/google_auth.dart';
 import 'package:learnify/auth/services/internet_con.dart';
 import 'package:learnify/constants/colors.dart';
 import 'package:learnify/screens/home_screen.dart';
-import 'package:learnify/screens/home_screen.dart' hide HomeScreen;
+
 
 class GoogleLoginScreen extends StatefulWidget {
   const GoogleLoginScreen({super.key});
@@ -74,6 +75,7 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
             );
 
             if (context.mounted) {
+              createUserDocumentIfNotExists();
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -342,6 +344,25 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
       );
     } finally {
       if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> createUserDocumentIfNotExists() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final userDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
+    final docSnapshot = await userDoc.get();
+
+    if (!docSnapshot.exists) {
+      await userDoc.set({
+        'name': user.displayName ?? 'New User',
+        'email': user.email,
+        'profileImage': user.photoURL ?? null,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
     }
   }
 

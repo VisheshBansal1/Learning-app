@@ -56,12 +56,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         centerTitle: true,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
         actions: [
           IconButton(
             onPressed: () {
@@ -78,7 +72,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      drawer: MyDrawer(),
+      drawer: MyDrawer(
+        
+      ),
       body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
