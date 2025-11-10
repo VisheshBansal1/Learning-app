@@ -41,6 +41,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (image == null) return;
     setState(() {
       selectedImage = File(image.path);
+
     });
   }
 

@@ -13,13 +13,6 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  int _selectedIndex = 0;
-  static const backgroundColor = Color(0xFF151022);
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  } 
   
   @override
   Widget build(BuildContext context) {

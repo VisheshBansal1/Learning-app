@@ -14,7 +14,6 @@ Widget buildInfoCards() {
             // height: 100,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              
             ),
             // padding: const EdgeInsets.all(16),
             child: StreamBuilder<DocumentSnapshot>(

@@ -29,7 +29,7 @@ class StreakCard extends StatelessWidget {
           return const Text("No streak data yet");
         }
 
-        final streak = data['streakCount'] ?? 0;
+        final streak = data['streakCount'] ?? 1 ;
 
         return Card(
           elevation: 5,

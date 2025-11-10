@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:learnify/leaderboard_models/achievement.dart';
-// import '../models/achievement.dart';
+import 'package:learnify/models/achievement.dart';
 
 class AchievementsSection extends StatelessWidget {
-  final List<Achievement> achievements;
-
   const AchievementsSection({super.key, required this.achievements});
+  final List<Achievement> achievements;
 
   @override
   Widget build(BuildContext context) {
