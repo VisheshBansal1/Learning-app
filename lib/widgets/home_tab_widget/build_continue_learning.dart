@@ -1,6 +1,6 @@
 
   import 'package:flutter/material.dart';
-import 'package:learnify/widgets/home_screen_widget/build_learning_card.dart';
+import 'package:learnify/widgets/home_tab_widget/build_learning_card.dart';
 
 Widget buildContinueLearning() {
     return Padding(

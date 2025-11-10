@@ -59,10 +59,20 @@ class HeaderSection extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 Text(
                   email,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 InkWell(
@@ -72,7 +82,7 @@ class HeaderSection extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => EditProfileScreen(
                           name: name,
-                          email: email,
+                          // email: email,
                           imagePath: imagePath,
                         ),
                       ),

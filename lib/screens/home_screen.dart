@@ -6,6 +6,7 @@ import 'package:learnify/screens/home_tab.dart';
 import 'package:learnify/screens/leaderboard_screen.dart';
 import 'package:learnify/screens/notification_screen.dart';
 import 'package:learnify/screens/profile_screen.dart';
+import 'package:learnify/services/streak_service.dart';
 import 'package:learnify/widgets/my_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,6 +17,20 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeStreak();
+  }
+
+  Future<void> _initializeStreak() async {
+    try {
+      await StreakService().updateLoginStreak();
+    } catch (e) {
+      debugPrint('Error updating streak: $e');
+    }
+  }
+
   int _selectedIndex = 0;
 
   final List<IconData> _icons = [
@@ -34,12 +49,12 @@ class _HomeScreenState extends State<HomeScreen> {
     'Profile',
   ];
 
-  final List<Widget> _screens = const [
-    HomeTab(),
-    CourseScreen(),
-    AITutorScreen(),
+  final List<Widget> _screens = [
+    const HomeTab(),
+    const CourseScreen(),
+    const AITutorScreen(),
     LeaderboardScreen(),
-    ProfileScreen(),
+    const ProfileScreen(),
   ];
 
   @override
@@ -72,9 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      drawer: MyDrawer(
-        
-      ),
+      drawer: MyDrawer(),
       body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(

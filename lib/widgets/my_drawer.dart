@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:learnify/widgets/profile_section_widgets/header_section.dart';
-import 'package:learnify/widgets/profile_section_widgets/section1.dart';
-import 'package:learnify/widgets/profile_section_widgets/section2.dart';
-import 'package:learnify/widgets/profile_section_widgets/section3.dart';
+import 'package:learnify/constants/colors.dart';
+import 'package:learnify/widgets/drawer_widget/header_section.dart';
+import 'package:learnify/widgets/drawer_widget/section1.dart';
+import 'package:learnify/widgets/drawer_widget/section2.dart';
+import 'package:learnify/widgets/drawer_widget/section3.dart';
 
 class MyDrawer extends StatefulWidget {
   const MyDrawer({super.key});
@@ -61,7 +62,7 @@ class _MyDrawerState extends State<MyDrawer> {
 
     setState(() {
       name = newName;
-      email = user.email ?? newEmail;
+      // email = user.email ?? newEmail;
       imagePath = newImage;
     });
   }
@@ -72,11 +73,12 @@ class _MyDrawerState extends State<MyDrawer> {
       child: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.cyanAccent, Colors.blueGrey, Colors.black38],
+            colors: [MyColors.mainColor, Colors.blueGrey, Colors.black38],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
         ),
+
         child: ListView(
           children: [
             Column(
