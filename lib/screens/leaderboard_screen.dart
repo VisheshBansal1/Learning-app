@@ -27,7 +27,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       trophyColor: const Color(0xFFFFD700),
     ),
     AppUser(
-      name: "Ankush",
+      name: "Ankush", 
       xp: 14980,
       rank: 2,
       avatarUrl: 'https://randomuser.me/api/portraits/men/65.jpg',
@@ -66,7 +66,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     ),
   ];
 
-  final List<Achievement> achievements = const [
+  final List<Achievement> achievements = const [  
     Achievement(
       icon: Icons.local_fire_department_outlined,
       label: "7-Day Streak",

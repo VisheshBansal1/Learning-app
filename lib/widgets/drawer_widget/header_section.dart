@@ -82,7 +82,7 @@ class HeaderSection extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => EditProfileScreen(
                           name: name,
-                          // email: email,
+                          email: email,
                           imagePath: imagePath,
                         ),
                       ),

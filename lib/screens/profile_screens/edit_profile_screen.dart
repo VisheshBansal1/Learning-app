@@ -7,13 +7,13 @@ import 'package:permission_handler/permission_handler.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final String name;
-  // final String email;
+  final String email;
   final String? imagePath;
 
   const EditProfileScreen({
     super.key,
     required this.name,
-    // required this.email,
+    required this.email,
     this.imagePath,
   });
 
@@ -23,14 +23,14 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController nameController;
-  // late TextEditingController emailController;
+  late TextEditingController emailController;
   File? selectedImage;
 
   @override
   void initState() {
     super.initState();
     nameController = TextEditingController(text: widget.name);
-    // emailController = TextEditingController(text: widget.email);
+    emailController = TextEditingController(text: widget.email);
     if (widget.imagePath != null) {
       selectedImage = File(widget.imagePath!);
     }
@@ -41,7 +41,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (image == null) return;
     setState(() {
       selectedImage = File(image.path);
-
     });
   }
 
@@ -120,7 +119,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                     Navigator.pop(context, {
                       'name': nameController.text,
-                      // 'email': widget.email, // email stays same as Auth
+                      'email': widget.email, // email stays same as Auth
                       'imagePath': selectedImage?.path,
                     });
 
