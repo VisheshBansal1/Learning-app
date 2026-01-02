@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:learnify/constants/colors.dart';
+import 'package:learnify/screens/dashboard/home_screen/home_tab_sections/build_recommended_card.dart';
 import 'package:learnify/screens/dashboard/home_screen/home_tab_sections/continue_learning_sections.dart';
 import 'package:learnify/screens/dashboard/home_screen/home_tab_sections/build_info_card.dart';
-import 'package:learnify/screens/dashboard/home_screen/home_tab_sections/build_recommended.dart';
 import 'package:learnify/screens/dashboard/home_screen/home_tab_sections/build_top_section.dart';
 
 class HomeTab extends StatefulWidget {
@@ -13,7 +13,6 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,12 +25,12 @@ class _HomeTabState extends State<HomeTab> {
               buildTopSection(context),
               buildInfoCards(),
               ContinueLearningSection(),
-              buildRecommended(),
+              RecommendedSection(),
               const SizedBox(height: 20),
             ],
           ),
         ),
-      ), 
+      ),
     );
   }
 }

@@ -10,7 +10,7 @@ Widget buildInfoCards() {
     return const Padding(
       padding: EdgeInsets.all(16),
       child: Text(
-        "User not logged in",
+        "Not logged in",
         style: TextStyle(color: Colors.white),
       ),
     );
@@ -24,30 +24,31 @@ Widget buildInfoCards() {
           .doc(user.uid)
           .snapshots(),
       builder: (context, snapshot) {
-        // ---- LOADING ----
         if (snapshot.connectionState == ConnectionState.waiting) {
           return _loadingCards();
         }
 
-        // ---- ERROR ----
         if (snapshot.hasError) {
           return _errorCards();
         }
 
-        // ---- NO DATA ----
         if (!snapshot.hasData || !snapshot.data!.exists) {
           return _emptyCards();
         }
 
         final data = snapshot.data!.data()!;
 
-        final int streakCount = data['streakCount'] ?? 0;
+        final int streakCount = (data['streakCount'] ?? 0) as int;
 
-        /// SUPPORT BOTH STRUCTURES
         int ongoingCourses = 0;
-        if (data['activeCourses'] != null) {
+
+        // FAST METHOD (recommended)
+        if (data['activeCourses'] is int) {
           ongoingCourses = data['activeCourses'];
-        } else if (data['courses'] is List) {
+        }
+
+        // BACKUP METHOD (list-based)
+        else if (data['courses'] is List) {
           ongoingCourses = (data['courses'] as List)
               .where((c) => (c['progress'] ?? 0) < 100)
               .length;
@@ -63,7 +64,7 @@ Widget buildInfoCards() {
                 iconColor: Colors.deepOrange,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: InfoCard(
                 icon: Icons.school_rounded,
@@ -87,16 +88,16 @@ Widget _loadingCards() {
         child: InfoCard(
           icon: Icons.local_fire_department,
           label: "Learning Streak",
-          value: "Loading...",
+          value: "...",
           iconColor: Colors.deepOrange,
         ),
       ),
-      SizedBox(width: 16),
+      SizedBox(width: 12),
       Expanded(
         child: InfoCard(
           icon: Icons.school_rounded,
           label: "Ongoing Courses",
-          value: "Loading...",
+          value: "...",
           iconColor: Colors.blueAccent,
         ),
       ),
@@ -105,26 +106,9 @@ Widget _loadingCards() {
 }
 
 Widget _errorCards() {
-  return Row(
-    children: const [
-      Expanded(
-        child: InfoCard(
-          icon: Icons.error,
-          label: "Error",
-          value: "Failed",
-          iconColor: Colors.redAccent,
-        ),
-      ),
-      SizedBox(width: 16),
-      Expanded(
-        child: InfoCard(
-          icon: Icons.error,
-          label: "Error",
-          value: "Failed",
-          iconColor: Colors.redAccent,
-        ),
-      ),
-    ],
+  return const Text(
+    "Failed to load data",
+    style: TextStyle(color: Colors.redAccent),
   );
 }
 
@@ -139,7 +123,7 @@ Widget _emptyCards() {
           iconColor: Colors.deepOrange,
         ),
       ),
-      SizedBox(width: 16),
+      SizedBox(width: 12),
       Expanded(
         child: InfoCard(
           icon: Icons.school_rounded,

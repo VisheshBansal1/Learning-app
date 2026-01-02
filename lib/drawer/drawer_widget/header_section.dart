@@ -16,104 +16,130 @@ class HeaderSection extends StatelessWidget {
     required this.onProfileUpdated,
   });
 
+  ImageProvider _getProfileImage() {
+    if (imagePath == null || imagePath!.isEmpty) {
+      return const NetworkImage(
+        'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+      );
+    }
+
+    // Local file path
+    if (imagePath!.startsWith('/')) {
+      return FileImage(File(imagePath!));
+    }
+
+    // Network URL
+    return NetworkImage(imagePath!);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 10, 10, 20),
-        child: Row(
-          spacing: 10,
-          children: [
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundImage: imagePath != null
-                      ? FileImage(File(imagePath!))
-                      : const NetworkImage(
-                              'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-                            )
-                            as ImageProvider,
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                    ),
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(
-                      Icons.camera_alt,
-                      size: 12.0,
-                      color: Colors.grey[700],
-                    ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          // ---- PROFILE IMAGE ----
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 34,
+                backgroundImage: _getProfileImage(),
+                backgroundColor: Colors.grey.shade800,
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.black,
+                    border: Border.all(color: Colors.white, width: 1),
+                  ),
+                  padding: const EdgeInsets.all(4),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    size: 12,
+                    color: Colors.white,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(width: 10),
-            Column(
+              ),
+            ],
+          ),
+
+          const SizedBox(width: 14),
+
+          // ---- NAME + EMAIL ----
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  name.isEmpty ? 'User' : name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    fontSize: 13,
+                    color: Colors.white70,
                   ),
                 ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EditProfileScreen(
-                          name: name,
-                          email: email,
-                          imagePath: imagePath,
-                        ),
-                      ),
-                    );
+                const SizedBox(height: 10),
 
-                    if (result != null && result is Map<String, dynamic>) {
-                      onProfileUpdated(
-                        result['name'],
-                        result['email'],
-                        result['imagePath'],
-                      );
-                    }
-                  },
-                  child: Container(
-                    height: 25,
-                    width: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.blueAccent,
-                      borderRadius: BorderRadius.circular(5),
+                // ---- EDIT PROFILE BUTTON ----
+                SizedBox(
+                  height: 30,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurpleAccent,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                     ),
-                    child: const Center(
-                      child: Text(
-                        'Edit Profile',
-                        style: TextStyle(color: Colors.white),
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EditProfileScreen(
+                            name: name,
+                            email: email,
+                            imagePath: imagePath,
+                          ),
+                        ),
+                      );
+
+                      if (result != null && result is Map<String, dynamic>) {
+                        onProfileUpdated(
+                          result['name'],
+                          result['email'],
+                          result['imagePath'],
+                        );
+                      }
+                    },
+                    child: const Text(
+                      'Edit Profile',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

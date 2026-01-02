@@ -17,6 +17,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+
+  /// Run once on app open
   @override
   void initState() {
     super.initState();
@@ -27,131 +30,154 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       await StreakService().updateLoginStreak();
     } catch (e) {
-      debugPrint('Error updating streak: $e');
+      debugPrint('Streak update failed: $e');
     }
   }
 
-  int _selectedIndex = 0;
-
-  final List<IconData> _icons = [
-    Icons.home_outlined,
-    Icons.school_outlined,
-    Icons.smart_toy_outlined,
-    Icons.leaderboard_outlined,
-    Icons.person_outline,
+  /// Navigation data (single source of truth)
+  static const _navItems = [
+    _NavItem(icon: Icons.home_outlined, label: 'Home'),
+    _NavItem(icon: Icons.school_outlined, label: 'Courses'),
+    _NavItem(icon: Icons.smart_toy_outlined, label: 'AI Tutor'),
+    _NavItem(icon: Icons.leaderboard_outlined, label: 'Leaderboard'),
+    _NavItem(icon: Icons.person_outline, label: 'Profile'),
   ];
 
-  final List<String> _labels = [
-    'Home',
-    'Courses',
-    'AI Tutor',
-    'Leaderboard',
-    'Profile',
-  ];
-
-  final List<Widget> _screens = [
-    const HomeTab(),
-    const CourseScreen(),
-    const AITutorScreen(),
+  /// Screens (keep const where possible)
+  final List<Widget> _screens = const [
+    HomeTab(),
+    CourseScreen(),
+    AITutorScreen(),
     LeaderboardScreen(),
-    const ProfileScreen(),
+    ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: MyColors.mainColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: Text(
-          _labels[_selectedIndex],
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+    return WillPopScope(
+      onWillPop: () async {
+        // Prevent accidental app exit
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: MyColors.mainColor,
+        drawer: MyDrawer(),
+
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          title: Text(
+            _navItems[_selectedIndex].label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.notifications, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationScreen()),
+                );
+              },
+            ),
+          ],
         ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) {
-                    return NotificationScreen();
-                  },
-                ),
-              );
-            },
-            icon: Icon(Icons.notifications),
-          ),
-        ],
-      ),
-      drawer: MyDrawer(),
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(25),
-            topRight: Radius.circular(25),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(_icons.length, (index) {
-              final isSelected = _selectedIndex == index;
-              return GestureDetector(
-                onTap: () {
-                  setState(() => _selectedIndex = index);
-                },
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isSelected
-                            ? Colors.deepPurpleAccent
-                            : Colors.transparent,
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: Colors.deepPurpleAccent,
-                                  blurRadius: 20,
-                                  spreadRadius: 2,
-                                ),
-                              ]
-                            : [],
-                      ),
-                      child: Icon(
-                        _icons[index],
-                        color: isSelected ? Colors.white : Colors.white70,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _labels[index],
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.white54,
-                        fontSize: 12,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ),
+
+        body: SafeArea(child: _screens[_selectedIndex]),
+
+        bottomNavigationBar: _BottomNavBar(
+          currentIndex: _selectedIndex,
+          items: _navItems,
+          onTap: (index) {
+            if (_selectedIndex == index) return;
+            setState(() => _selectedIndex = index);
+          },
         ),
       ),
     );
   }
+}
+
+class _BottomNavBar extends StatelessWidget {
+  final int currentIndex;
+  final List<_NavItem> items;
+  final ValueChanged<int> onTap;
+
+  const _BottomNavBar({
+    required this.currentIndex,
+    required this.items,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(items.length, (index) {
+          final isSelected = currentIndex == index;
+
+          return GestureDetector(
+            onTap: () => onTap(index),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isSelected
+                        ? Colors.deepPurpleAccent
+                        : Colors.transparent,
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: Colors.deepPurpleAccent.withOpacity(0.6),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Icon(
+                    items[index].icon,
+                    color: isSelected ? Colors.white : Colors.white70,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  items[index].label,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.white54,
+                    fontSize: 12,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _NavItem {
+  final IconData icon;
+  final String label;
+
+  const _NavItem({required this.icon, required this.label});
 }
