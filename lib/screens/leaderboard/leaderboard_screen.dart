@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:learnify/models/achievement.dart';
 import 'package:learnify/models/user.dart';
-import 'package:learnify/widgets/leaderboard_screen_widgets/achievements_section.dart';
-import 'package:learnify/widgets/leaderboard_screen_widgets/leaderboard_list.dart';
+import 'package:learnify/screens/leaderboard/leaderboard_screen_widgets/achievements_section.dart';
+import 'package:learnify/screens/leaderboard/leaderboard_screen_widgets/leaderboard_list.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});

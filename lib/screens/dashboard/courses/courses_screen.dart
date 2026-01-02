@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:learnify/constants/colors.dart';
-import 'package:learnify/screens/course_detail_screen.dart';
+import 'package:learnify/screens/dashboard/courses/course_detail_screen.dart';
 
 class CourseScreen extends StatefulWidget {
   const CourseScreen({super.key});

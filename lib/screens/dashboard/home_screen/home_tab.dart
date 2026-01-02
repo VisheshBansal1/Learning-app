@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:learnify/constants/colors.dart';
-import 'package:learnify/widgets/home_tab_widget/build_continue_learning.dart';
-import 'package:learnify/widgets/home_tab_widget/build_info_card.dart';
-import 'package:learnify/widgets/home_tab_widget/build_recommended.dart';
-import 'package:learnify/widgets/home_tab_widget/build_top_section.dart';
+import 'package:learnify/screens/dashboard/home_screen/home_tab_sections/continue_learning_sections.dart';
+import 'package:learnify/screens/dashboard/home_screen/home_tab_sections/build_info_card.dart';
+import 'package:learnify/screens/dashboard/home_screen/home_tab_sections/build_recommended.dart';
+import 'package:learnify/screens/dashboard/home_screen/home_tab_sections/build_top_section.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -25,7 +25,7 @@ class _HomeTabState extends State<HomeTab> {
             children: [
               buildTopSection(context),
               buildInfoCards(),
-              buildContinueLearning(),
+              ContinueLearningSection(),
               buildRecommended(),
               const SizedBox(height: 20),
             ],

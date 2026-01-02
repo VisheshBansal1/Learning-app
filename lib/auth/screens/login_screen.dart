@@ -12,7 +12,8 @@ import 'package:learnify/auth/widgets/forgot_password_button.dart';
 import 'package:learnify/auth/widgets/google_signin_button.dart';
 import 'package:learnify/auth/widgets/term_text.dart';
 import 'package:learnify/constants/colors.dart';
-import 'package:learnify/screens/home_screen.dart';
+import 'package:learnify/screens/dashboard/dashboard.dart';
+import 'package:learnify/services/streak_service.dart';
 
 class GoogleLoginScreen extends StatefulWidget {
   const GoogleLoginScreen({super.key});
@@ -87,6 +88,8 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
       }
 
       await createUserDocumentIfNotExists();
+
+      await StreakService().updateLoginStreak();
 
       if (mounted) {
         Navigator.pushReplacement(

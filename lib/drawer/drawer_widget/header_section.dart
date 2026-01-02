@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:learnify/screens/profile_screens/edit_profile_screen.dart';
-// import 'package:profile_ui_task1/screens/edit_profile_screen.dart';
+import 'package:learnify/screens/profile/edit_profile_screen.dart';
 
 class HeaderSection extends StatelessWidget {
   final String name;

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:learnify/constants/colors.dart';
-import 'package:learnify/screens/course_detail_screen/course_discussion_tab.dart';
-import 'package:learnify/screens/course_detail_screen/course_lessons_tab.dart';
-import 'package:learnify/screens/course_detail_screen/course_notes_tab.dart';
-import 'package:learnify/screens/course_detail_screen/course_quiz_tab.dart';
+import 'package:learnify/screens/dashboard/courses/course_detail_screen/course_discussion_tab.dart';
+import 'package:learnify/screens/dashboard/courses/course_detail_screen/course_lessons_tab.dart';
+import 'package:learnify/screens/dashboard/courses/course_detail_screen/course_notes_tab.dart';
+import 'package:learnify/screens/dashboard/courses/course_detail_screen/course_quiz_tab.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class CourseDetailScreen extends StatefulWidget {

@@ -3,14 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:learnify/constants/colors.dart';
 import 'package:learnify/auth/screens/login_screen.dart';
-import 'package:learnify/widgets/drawer_widget/header_section.dart';
-import 'package:learnify/widgets/profile_screen_widget/current_user_progress.dart';
-import 'package:learnify/widgets/profile_screen_widget/certificates_screen.dart';
-import 'package:learnify/widgets/profile_screen_widget/info_card.dart';
-import 'package:learnify/widgets/profile_screen_widget/language_screen.dart';
-import 'package:learnify/widgets/profile_screen_widget/logout_tile.dart';
-import 'package:learnify/widgets/profile_screen_widget/menu_item_tile.dart';
-import 'package:learnify/widgets/profile_screen_widget/switch_tile.dart';
+import 'package:learnify/drawer/drawer_widget/header_section.dart';
+import 'package:learnify/screens/profile/profile_screen_widget/current_user_progress.dart';
+import 'package:learnify/screens/profile/profile_screen_widget/certificates_screen.dart';
+import 'package:learnify/screens/profile/profile_screen_widget/info_card.dart';
+import 'package:learnify/screens/profile/profile_screen_widget/language_screen.dart';
+import 'package:learnify/screens/profile/profile_screen_widget/logout_tile.dart';
+import 'package:learnify/screens/profile/profile_screen_widget/menu_item_tile.dart';
+import 'package:learnify/screens/profile/profile_screen_widget/switch_tile.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

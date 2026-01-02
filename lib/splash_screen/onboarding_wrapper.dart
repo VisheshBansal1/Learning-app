@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:learnify/constants/colors.dart';
-import 'package:learnify/screens/start_screens/start_screen1.dart';
-import 'package:learnify/screens/start_screens/start_screen2.dart';
+import 'package:learnify/splash_screen/start_screen1.dart';
+import 'package:learnify/splash_screen/start_screen2.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class OnboardingWrapper extends StatelessWidget {

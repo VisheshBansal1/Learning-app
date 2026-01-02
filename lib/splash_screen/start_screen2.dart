@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:learnify/constants/colors.dart';
-import 'package:learnify/screens/home_screen.dart';
-import 'package:learnify/screens/start_screens/start_screen3.dart';
+import 'package:learnify/screens/dashboard/dashboard.dart';
+import 'package:learnify/splash_screen/start_screen3.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 
 class StartScreen2 extends StatelessWidget {

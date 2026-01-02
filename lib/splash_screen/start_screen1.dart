@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:learnify/constants/colors.dart';
-import 'package:learnify/screens/home_screen.dart';
+import 'package:learnify/screens/dashboard/dashboard.dart';
 
 class StartScreen1 extends StatelessWidget {
   const StartScreen1({super.key});

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:learnify/constants/colors.dart';
-import 'package:learnify/screens/ai_tutor_screen.dart';
-import 'package:learnify/screens/courses_screen.dart';
-import 'package:learnify/screens/home_tab.dart';
-import 'package:learnify/screens/leaderboard_screen.dart';
+import 'package:learnify/screens/dashboard/ai_tutor/ai_tutor_screen.dart';
+import 'package:learnify/screens/dashboard/courses/courses_screen.dart';
+import 'package:learnify/screens/dashboard/home_screen/home_tab.dart';
+import 'package:learnify/screens/leaderboard/leaderboard_screen.dart';
 import 'package:learnify/screens/notification_screen.dart';
-import 'package:learnify/screens/profile_screen.dart';
+import 'package:learnify/screens/profile/profile_screen.dart';
 import 'package:learnify/services/streak_service.dart';
-import 'package:learnify/widgets/my_drawer.dart';
+import 'package:learnify/drawer/my_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

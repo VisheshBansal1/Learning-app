@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:learnify/widgets/home_tab_widget/build_recommended_card.dart';
+import 'package:learnify/screens/dashboard/home_screen/home_tab_sections/build_recommended_card.dart';
 
 Widget buildRecommended() {
     return Padding(

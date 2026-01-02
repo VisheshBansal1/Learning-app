@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:learnify/constants/colors.dart';
-import 'package:learnify/widgets/drawer_widget/header_section.dart';
-import 'package:learnify/widgets/drawer_widget/section1.dart';
-import 'package:learnify/widgets/drawer_widget/section2.dart';
-import 'package:learnify/widgets/drawer_widget/section3.dart';
+import 'package:learnify/drawer/drawer_widget/header_section.dart';
+import 'package:learnify/drawer/drawer_widget/section1.dart';
+import 'package:learnify/drawer/drawer_widget/section2.dart';
+import 'package:learnify/drawer/drawer_widget/section3.dart';
 
 class MyDrawer extends StatefulWidget {
   const MyDrawer({super.key});
