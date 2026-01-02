@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class InfoCard extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String value;
+  final String? value;
   final Color iconColor;
 
   const InfoCard({
@@ -23,7 +23,6 @@ class InfoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -45,7 +44,7 @@ class InfoCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            value,
+            value ?? "--",
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,

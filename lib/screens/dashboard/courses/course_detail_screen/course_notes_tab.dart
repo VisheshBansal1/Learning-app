@@ -1,88 +1,95 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class CourseNotesTab extends StatefulWidget {
-  final int currentIndex;
-  final Map<int, List<String>> userNotes;
-  final TextEditingController noteController;
+class CourseNotesTab extends StatelessWidget {
+  final String courseId;
+  final int lessonIndex;
+  final TextEditingController controller;
 
   const CourseNotesTab({
     super.key,
-    required this.currentIndex,
-    required this.userNotes,
-    required this.noteController,
+    required this.courseId,
+    required this.lessonIndex,
+    required this.controller,
   });
 
   @override
-  State<CourseNotesTab> createState() => _CourseNotesTabState();
-}
-
-class _CourseNotesTabState extends State<CourseNotesTab> {
-  @override
   Widget build(BuildContext context) {
-    final notes = widget.userNotes[widget.currentIndex] ?? [];
+    final uid = FirebaseAuth.instance.currentUser!.uid;
 
     return Column(
       children: [
         Expanded(
-          child: notes.isEmpty
-              ? const Center(
-                  child: Text("No notes yet. Add your own!",
-                      style: TextStyle(color: Colors.white54)),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: notes.length,
-                  itemBuilder: (context, index) => Card(
-                    color: const Color(0xFF1E1E1E),
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      leading: const Icon(Icons.note,
-                          color: Colors.deepPurpleAccent),
-                      title: Text("Note ${index + 1}",
-                          style: const TextStyle(color: Colors.white)),
-                      subtitle: Text(notes[index],
-                          style: const TextStyle(color: Colors.white70)),
-                    ),
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(uid)
+                .collection('courseNotes')
+                .where('courseId', isEqualTo: courseId)
+                .where('lessonIndex', isEqualTo: lessonIndex)
+                .orderBy('createdAt')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.data!.docs.isEmpty) {
+                return const Center(
+                  child: Text(
+                    "No notes yet",
+                    style: TextStyle(color: Colors.white54),
                   ),
-                ),
+                );
+              }
+
+              return ListView(
+                children: snapshot.data!.docs.map((doc) {
+                  return ListTile(
+                    title: Text(
+                      doc['text'],
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          color: const Color(0xFF1A1A1A),
+
+        /// ADD NOTE
+        Padding(
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               Expanded(
                 child: TextField(
-                  controller: widget.noteController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
+                  controller: controller,
+                  decoration: const InputDecoration(
                     hintText: "Write a note...",
-                    hintStyle: const TextStyle(color: Colors.white54),
-                    filled: true,
-                    fillColor: const Color(0xFF2A2A2A),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   ),
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.add, color: Colors.deepPurpleAccent),
-                onPressed: () {
-                  final text = widget.noteController.text.trim();
-                  if (text.isNotEmpty) {
-                    setState(() {
-                      widget.userNotes
-                          .putIfAbsent(widget.currentIndex, () => [])
-                          .add(text);
-                      widget.noteController.clear();
-                    });
-                  }
+                icon: const Icon(Icons.send),
+                onPressed: () async {
+                  if (controller.text.trim().isEmpty) return;
+
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(uid)
+                      .collection('courseNotes')
+                      .add({
+                    'courseId': courseId,
+                    'lessonIndex': lessonIndex,
+                    'text': controller.text.trim(),
+                    'createdAt': FieldValue.serverTimestamp(),
+                  });
+
+                  controller.clear();
                 },
-              )
+              ),
             ],
           ),
         ),

@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:learnify/constants/colors.dart';
-import 'package:learnify/screens/dashboard/courses/course_detail_screen.dart';
+import 'course_detail_screen.dart';
 
 class CourseScreen extends StatefulWidget {
   const CourseScreen({super.key});
@@ -10,54 +12,25 @@ class CourseScreen extends StatefulWidget {
 }
 
 class _CourseScreenState extends State<CourseScreen> {
-  String selectedCategory = 'All';
-  bool isGridView = true;
   String searchQuery = '';
+  String selectedCategory = 'All';
 
-  final List<String> categories = ['All', 'Tech', 'Design', 'Growth'];
-
-  final List<Map<String, dynamic>> courses = [
-    {
-      'title': 'Flutter Development Masterclass',
-      'instructor': 'Angela Yu',
-      'thumbnail': 'https://img.youtube.com/vi/fq4N0hgOWzU/0.jpg',
-      'playlist': [
-        'fq4N0hgOWzU',
-        'x0uinJvhNxI',
-        '5yrAm5WT7D8',
-      ],
-    },
-    {
-      'title': 'Python for Beginners',
-      'instructor': 'John Doe',
-      'thumbnail': 'https://img.youtube.com/vi/_uQrJ0TkZlc/0.jpg',
-      'playlist': [
-        '_uQrJ0TkZlc',
-        'rfscVS0vtbw',
-        'WGJJIrtnfpk',
-      ],
-    },
-  ];
+  final categories = ['All', 'Tech', 'Design', 'Growth'];
 
   @override
   Widget build(BuildContext context) {
-    final filteredCourses = courses.where((course) {
-      final matchesSearch =
-          course['title']!.toLowerCase().contains(searchQuery.toLowerCase());
-      return matchesSearch || selectedCategory == 'All';
-    }).toList();
-
     return Scaffold(
       backgroundColor: MyColors.mainColor,
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search Bar
+            /// 🔍 SEARCH
             TextField(
+              onChanged: (v) => setState(() => searchQuery = v),
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: 'Search for a course...',
+                hintText: "Search courses...",
                 hintStyle: const TextStyle(color: Colors.white54),
                 prefixIcon: const Icon(Icons.search, color: Colors.white70),
                 filled: true,
@@ -67,38 +40,35 @@ class _CourseScreenState extends State<CourseScreen> {
                   borderSide: BorderSide.none,
                 ),
               ),
-              style: const TextStyle(color: Colors.white),
-              onChanged: (value) => setState(() => searchQuery = value),
             ),
+
             const SizedBox(height: 16),
 
-            // Category Chips
+            /// 🏷️ CATEGORIES
             SizedBox(
-              height: 40,
+              height: 38,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: categories.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 10),
                 itemBuilder: (context, index) {
-                  final category = categories[index];
-                  final isSelected = category == selectedCategory;
+                  final cat = categories[index];
+                  final selected = cat == selectedCategory;
                   return GestureDetector(
-                    onTap: () => setState(() => selectedCategory = category),
+                    onTap: () => setState(() => selectedCategory = cat),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: isSelected
+                        color: selected
                             ? Colors.deepPurpleAccent
                             : const Color(0xFF1E1E1E),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        category,
+                        cat,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.white70,
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: selected ? Colors.white : Colors.white70,
                         ),
                       ),
                     ),
@@ -106,113 +76,147 @@ class _CourseScreenState extends State<CourseScreen> {
                 },
               ),
             ),
+
             const SizedBox(height: 16),
 
-            // Courses List/Grid
+            /// 📚 COURSES
             Expanded(
-              child: isGridView
-                  ? GridView.builder(
-                      itemCount: filteredCourses.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.8,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream:
+                    FirebaseFirestore.instance.collection('courses').snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(
+                      child:
+                          CircularProgressIndicator(color: Colors.white),
+                    );
+                  }
+
+                  final filtered = snapshot.data!.docs.where((doc) {
+                    final data = doc.data();
+                    final title =
+                        data['title'].toString().toLowerCase();
+                    final category = data['category'];
+
+                    return title.contains(searchQuery.toLowerCase()) &&
+                        (selectedCategory == 'All' ||
+                            category == selectedCategory);
+                  }).toList();
+
+                  if (filtered.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        "No courses found",
+                        style: TextStyle(color: Colors.white54),
                       ),
-                      itemBuilder: (context, index) {
-                        final course = filteredCourses[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => CourseDetailScreen(course: course),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E1E1E),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                ClipRRect(
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(15),
-                                    topRight: Radius.circular(15),
-                                  ),
-                                  child: Image.network(
-                                    course['thumbnail']!,
-                                    height: 110,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        course['title']!,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        course['instructor']!,
-                                        style: const TextStyle(
-                                          color: Colors.white54,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    )
-                  : ListView.builder(
-                      itemCount: filteredCourses.length,
-                      itemBuilder: (context, index) {
-                        final course = filteredCourses[index];
-                        return ListTile(
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              course['thumbnail']!,
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          title: Text(course['title']!,
-                              style: const TextStyle(color: Colors.white)),
-                          subtitle: Text(course['instructor']!,
-                              style: const TextStyle(color: Colors.white70)),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => CourseDetailScreen(course: course),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                    );
+                  }
+
+                  return GridView.builder(
+                    itemCount: filtered.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.78,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
                     ),
+                    itemBuilder: (context, index) {
+                      final doc = filtered[index];
+                      final data = doc.data();
+
+                      return GestureDetector(
+                        onTap: () async {
+                          final uid =
+                              FirebaseAuth.instance.currentUser!.uid;
+
+                          /// 🔥 CREATE USER PROGRESS IF NOT EXISTS
+                          final userCourseRef = FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(uid)
+                              .collection('courses')
+                              .doc(doc.id);
+
+                          if (!(await userCourseRef.get()).exists) {
+                            await userCourseRef.set({
+                              'progress': 0,
+                              'currentIndex': 0,
+                              'completedLectures': [],
+                              'startedAt':
+                                  FieldValue.serverTimestamp(),
+                              'lastAccessed':
+                                  FieldValue.serverTimestamp(),
+                            });
+                          }
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CourseDetailScreen(
+                                courseId: doc.id,
+                                course: data,
+                              ),
+                            ),
+                          );
+                        },
+                        child: _CourseCard(data),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _CourseCard(Map<String, dynamic> data) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Image.network(
+              data['thumbnail'],
+              height: 110,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data['title'],
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  data['instructor'],
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

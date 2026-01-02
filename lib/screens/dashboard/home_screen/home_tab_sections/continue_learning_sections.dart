@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:learnify/screens/dashboard/home_screen/lesson_screen.dart';
+import 'package:learnify/screens/dashboard/courses/course_detail_screen.dart';
 import 'learning_card.dart';
 
 class ContinueLearningSection extends StatelessWidget {
@@ -25,7 +25,9 @@ class ContinueLearningSection extends StatelessWidget {
               fontSize: 18,
             ),
           ),
+
           const SizedBox(height: 12),
+
           SizedBox(
             height: 150,
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -37,11 +39,11 @@ class ContinueLearningSection extends StatelessWidget {
                   .limit(5)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                if (snapshot.data!.docs.isEmpty) {
                   return const Center(
                     child: Text(
                       'No ongoing courses',
@@ -52,7 +54,6 @@ class ContinueLearningSection extends StatelessWidget {
 
                 return ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.only(right: 16),
                   itemCount: snapshot.data!.docs.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 14),
                   itemBuilder: (context, index) {
@@ -60,10 +61,14 @@ class ContinueLearningSection extends StatelessWidget {
                     final data = doc.data();
 
                     return LearningCard(
-                      title: data['title'],
+                      title: data['title'] ?? 'Course',
                       progress: data['progress'] ?? 0,
-                      gradientStart: Color(data['gradientStart']),
-                      gradientEnd: Color(data['gradientEnd']),
+                      gradientStart: Color(
+                        data['gradientStart'] ?? 0xFF6E7179,
+                      ),
+                      gradientEnd: Color(
+                        data['gradientEnd'] ?? 0xFF979C9D,
+                      ),
                       onTap: () async {
                         await doc.reference.update({
                           'lastAccessed': FieldValue.serverTimestamp(),
@@ -72,7 +77,10 @@ class ContinueLearningSection extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => LessonScreen(courseId: doc.id),
+                            builder: (_) => CourseDetailScreen(
+                              courseId: doc.id,
+                              course: const {},
+                            ),
                           ),
                         );
                       },

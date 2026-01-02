@@ -9,10 +9,7 @@ class CurrentUserProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-
-    if (user == null) {
-      return const SizedBox();
-    }
+    if (user == null) return const SizedBox();
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
@@ -20,14 +17,12 @@ class CurrentUserProgress extends StatelessWidget {
           .doc(user.uid)
           .snapshots(),
       builder: (context, snapshot) {
-        // 🔄 Loading
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return _loadingCard();
+          return _skeleton();
         }
 
-        // ❌ No data
         if (!snapshot.hasData || !snapshot.data!.exists) {
-          return _emptyCard();
+          return _empty();
         }
 
         final data = snapshot.data!.data()!;
@@ -35,11 +30,11 @@ class CurrentUserProgress extends StatelessWidget {
         final String name = data['name'] ?? 'You';
         final String imagePath = data['profileImage'] ?? '';
         final int xp = (data['xp'] ?? 0) as int;
-        final int nextXp = (data['nextXp'] ?? 100) as int;
+        final int levelXp = (data['levelXp'] ?? 100) as int;
         final int rank = (data['rank'] ?? 0) as int;
 
         final double progress =
-            nextXp > 0 ? (xp / nextXp).clamp(0.0, 1.0) : 0.0;
+            levelXp > 0 ? (xp / levelXp).clamp(0.0, 1.0) : 0;
 
         ImageProvider? avatar;
         if (imagePath.isNotEmpty) {
@@ -54,10 +49,11 @@ class CurrentUserProgress extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: const Color(0xFF1C1A2E),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(22),
           ),
           child: Row(
             children: [
+              /// AVATAR
               CircleAvatar(
                 radius: 28,
                 backgroundColor: Colors.deepPurpleAccent,
@@ -69,7 +65,7 @@ class CurrentUserProgress extends StatelessWidget {
 
               const SizedBox(width: 14),
 
-              /// 🔥 USER INFO + PROGRESS
+              /// USER INFO
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,7 +84,7 @@ class CurrentUserProgress extends StatelessWidget {
                     const SizedBox(height: 4),
 
                     Text(
-                      "$xp XP",
+                      "$xp / $levelXp XP",
                       style: TextStyle(
                         color: Colors.grey.shade300,
                         fontSize: 13,
@@ -104,8 +100,9 @@ class CurrentUserProgress extends StatelessWidget {
                         value: progress,
                         minHeight: 6,
                         backgroundColor: Colors.white24,
-                        valueColor:
-                            const AlwaysStoppedAnimation(Colors.deepPurpleAccent),
+                        valueColor: const AlwaysStoppedAnimation(
+                          Colors.deepPurpleAccent,
+                        ),
                       ),
                     ),
                   ],
@@ -114,7 +111,7 @@ class CurrentUserProgress extends StatelessWidget {
 
               const SizedBox(width: 12),
 
-              /// 🔥 RANK
+              /// RANK
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -128,7 +125,7 @@ class CurrentUserProgress extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "${(nextXp - xp).clamp(0, nextXp)} XP to next",
+                    "${(levelXp - xp).clamp(0, levelXp)} XP left",
                     style: const TextStyle(
                       color: Colors.white54,
                       fontSize: 12,
@@ -143,27 +140,27 @@ class CurrentUserProgress extends StatelessWidget {
     );
   }
 
-  // ---------- HELPERS ----------
+  // ------------------ STATES ------------------
 
-  Widget _loadingCard() {
+  Widget _skeleton() {
     return Container(
       height: 90,
       decoration: BoxDecoration(
         color: Colors.grey.shade800,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
       ),
     );
   }
 
-  Widget _emptyCard() {
+  Widget _empty() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey.shade900,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
       ),
       child: const Text(
-        "No progress data",
+        "Progress not available",
         style: TextStyle(color: Colors.white54),
       ),
     );

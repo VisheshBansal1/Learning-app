@@ -1,101 +1,90 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class CourseDiscussionTab extends StatefulWidget {
-  final List<Map<String, String>> discussions;
-  final TextEditingController commentController;
+class CourseDiscussionTab extends StatelessWidget {
+  final String courseId;
+  final TextEditingController controller;
 
   const CourseDiscussionTab({
     super.key,
-    required this.discussions,
-    required this.commentController,
+    required this.courseId,
+    required this.controller,
   });
 
   @override
-  State<CourseDiscussionTab> createState() => _CourseDiscussionTabState();
-}
-
-class _CourseDiscussionTabState extends State<CourseDiscussionTab> {
-  @override
   Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: widget.discussions.length,
-            itemBuilder: (context, index) {
-              final item = widget.discussions[index];
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.deepPurpleAccent,
-                      child: Icon(Icons.person, color: Colors.white),
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('courses')
+                .doc(courseId)
+                .collection('discussions')
+                .orderBy('createdAt')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.data!.docs.isEmpty) {
+                return const Center(
+                  child: Text(
+                    "No discussions yet",
+                    style: TextStyle(color: Colors.white54),
+                  ),
+                );
+              }
+
+              return ListView(
+                children: snapshot.data!.docs.map((doc) {
+                  return ListTile(
+                    title: Text(
+                      doc['message'],
+                      style: const TextStyle(color: Colors.white),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(item['user']!,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 4),
-                          Text(item['comment']!,
-                              style: const TextStyle(color: Colors.white70)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                }).toList(),
               );
             },
           ),
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          color: const Color(0xFF1A1A1A),
+
+        /// ADD COMMENT
+        Padding(
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               Expanded(
                 child: TextField(
-                  controller: widget.commentController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: "Write a comment...",
-                    hintStyle: const TextStyle(color: Colors.white54),
-                    filled: true,
-                    fillColor: const Color(0xFF2A2A2A),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  controller: controller,
+                  decoration: const InputDecoration(
+                    hintText: "Ask something...",
                   ),
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.send, color: Colors.deepPurpleAccent),
-                onPressed: () {
-                  final text = widget.commentController.text.trim();
-                  if (text.isNotEmpty) {
-                    setState(() {
-                      widget.discussions.add({'user': 'You', 'comment': text});
-                      widget.commentController.clear();
-                    });
-                  }
+                icon: const Icon(Icons.send),
+                onPressed: () async {
+                  if (controller.text.trim().isEmpty) return;
+
+                  await FirebaseFirestore.instance
+                      .collection('courses')
+                      .doc(courseId)
+                      .collection('discussions')
+                      .add({
+                    'uid': uid,
+                    'message': controller.text.trim(),
+                    'createdAt': FieldValue.serverTimestamp(),
+                  });
+
+                  controller.clear();
                 },
-              )
+              ),
             ],
           ),
         ),

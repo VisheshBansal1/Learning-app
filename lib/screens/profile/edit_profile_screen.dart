@@ -22,180 +22,231 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  late TextEditingController nameController;
-  late TextEditingController emailController;
+  late final TextEditingController nameController;
   File? selectedImage;
+  bool isSaving = false;
 
   @override
   void initState() {
     super.initState();
     nameController = TextEditingController(text: widget.name);
-    emailController = TextEditingController(text: widget.email);
-    if (widget.imagePath != null) {
-      selectedImage = File(widget.imagePath!);
+
+    if (widget.imagePath != null && widget.imagePath!.isNotEmpty) {
+      final file = File(widget.imagePath!);
+      if (file.existsSync()) selectedImage = file;
     }
   }
 
-  Future<void> pickImageFromGallery() async {
-    final image = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (image == null) return;
-    setState(() {
-      selectedImage = File(image.path);
-    });
+  // ---------------- IMAGE PICKING ----------------
+
+  Future<void> pickFromGallery() async {
+    final image = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 75,
+    );
+    if (image != null) {
+      setState(() => selectedImage = File(image.path));
+    }
   }
 
-  Future<void> pickImageFromCamera() async {
+  Future<void> pickFromCamera() async {
     final status = await Permission.camera.request();
-    if (status.isGranted) {
-      final image = await ImagePicker().pickImage(source: ImageSource.camera);
-      if (image == null) return;
-      setState(() {
-        selectedImage = File(image.path);
-      });
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Camera permission denied')));
+    if (!status.isGranted) {
+      _showSnack("Camera permission denied");
+      return;
+    }
+
+    final image = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      imageQuality: 75,
+    );
+    if (image != null) {
+      setState(() => selectedImage = File(image.path));
     }
   }
+
+  // ---------------- SAVE ----------------
+
+  Future<void> saveProfile() async {
+    final name = nameController.text.trim();
+    if (name.isEmpty) {
+      _showSnack("Name cannot be empty");
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    setState(() => isSaving = true);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({
+        'name': name,
+        'profileImage': selectedImage?.path,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      Navigator.pop(context, {
+        'name': name,
+        'email': widget.email,
+        'imagePath': selectedImage?.path,
+      });
+
+      _showSnack("Profile updated");
+    } catch (_) {
+      _showSnack("Update failed");
+    } finally {
+      if (mounted) setState(() => isSaving = false);
+    }
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
+  }
+
+  // ---------------- UI ----------------
 
   @override
   Widget build(BuildContext context) {
-    final h = MediaQuery.of(context).size.height;
+    final avatar = selectedImage != null
+        ? FileImage(selectedImage!)
+        : const NetworkImage(
+            'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+          ) as ImageProvider;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: h / 3,
-            child: Image(
-              image: selectedImage != null
-                  ? FileImage(selectedImage!)
-                  : const NetworkImage(
-                          'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-                        )
-                        as ImageProvider,
-              fit: BoxFit.cover,
-            ),
-          ),
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_outlined),
-          ),
-          Container(
-            margin: EdgeInsets.only(top: h / 3.5),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                const SizedBox(height: 70),
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Full Name'),
+      backgroundColor: const Color(0xFF0E0E1A),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // 🔙 BACK
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
                 ),
-                const SizedBox(height: 10),
-                // TextFormField(
-                //   controller: emailController,
-                //   decoration: const InputDecoration(labelText: 'Email Address'),
-                // ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () async {
-                    final user = FirebaseAuth.instance.currentUser;
-                    if (user != null) {
-                      await FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(user.uid)
-                          .update({
-                            'name': nameController.text.trim(),
-                            'profileImage': selectedImage?.path,
-                          });
-                    }
+              ),
 
-                    Navigator.pop(context, {
-                      'name': nameController.text,
-                      'email': widget.email, // email stays same as Auth
-                      'imagePath': selectedImage?.path,
-                    });
+              const SizedBox(height: 20),
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Profile Updated')),
-                    );
-                  },
-
-                  child: const Text('Save Changes'),
-                ),
-              ],
-            ),
-          ),
-          Align(
-            alignment: const Alignment(0, -0.60),
-            child: Stack(
-              children: [
-                CircleAvatar(
-                  radius: 55,
-                  backgroundImage: selectedImage != null
-                      ? FileImage(selectedImage!)
-                      : const NetworkImage(
-                              'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-                            )
-                            as ImageProvider,
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: GestureDetector(
+              // 🔥 AVATAR
+              Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundImage: avatar,
+                  ),
+                  GestureDetector(
                     onTap: () {
-                      showDialog(
+                      showModalBottomSheet(
                         context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: const Text('Choose a picture'),
-                            content: const Text('Select an option'),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  pickImageFromGallery();
+                        builder: (_) => SafeArea(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.photo),
+                                title: const Text("Gallery"),
+                                onTap: () {
                                   Navigator.pop(context);
+                                  pickFromGallery();
                                 },
-                                child: const Text('Gallery'),
                               ),
-                              if (Platform.isIOS || Platform.isAndroid)
-                                TextButton(
-                                  onPressed: () {
-                                    pickImageFromCamera();
+                              if (Platform.isAndroid || Platform.isIOS)
+                                ListTile(
+                                  leading: const Icon(Icons.camera_alt),
+                                  title: const Text("Camera"),
+                                  onTap: () {
                                     Navigator.pop(context);
+                                    pickFromCamera();
                                   },
-                                  child: const Text('Camera'),
                                 ),
                             ],
-                          );
-                        },
+                          ),
+                        ),
                       );
                     },
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.blue,
-                        shape: BoxShape.circle,
-                      ),
-                      padding: const EdgeInsets.all(6),
-                      child: const Icon(
-                        Icons.edit,
-                        size: 20,
-                        color: Colors.white,
-                      ),
+                    child: const CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.deepPurpleAccent,
+                      child:
+                          Icon(Icons.edit, size: 18, color: Colors.white),
                     ),
                   ),
+                ],
+              ),
+
+              const SizedBox(height: 30),
+
+              // 🔥 FORM
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: "Full Name",
+                        labelStyle:
+                            const TextStyle(color: Colors.white70),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.white24),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.deepPurpleAccent),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 25),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: isSaving ? null : saveProfile,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurpleAccent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: isSaving
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                "Save Changes",
+                                style: TextStyle(fontSize: 16),
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+
+              const SizedBox(height: 40),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

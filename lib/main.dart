@@ -1,34 +1,67 @@
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:learnify/firebase_options.dart';
-import 'package:learnify/screens/dashboard/dashboard.dart';
-import 'package:learnify/splash_screen/onboarding_wrapper.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:overlay_support/overlay_support.dart';
+import 'package:provider/provider.dart';
+
+import 'firebase_options.dart';
+import 'theme/theme_controller.dart';
+import 'theme/app_theme.dart';
+import 'screens/dashboard/dashboard.dart';
+import 'splash_screen/onboarding_wrapper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:overlay_support/overlay_support.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'firebase_options.dart';
+import 'theme/theme_controller.dart';
+import 'theme/app_theme.dart';
+import 'screens/dashboard/dashboard.dart';
+import 'splash_screen/onboarding_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const MyApp());
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await Hive.initFlutter();
+
+  final themeController = ThemeController();
+  await themeController.init();
+
+  runApp(
+    ChangeNotifierProvider.value(
+      value: themeController,
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override 
+  @override
   Widget build(BuildContext context) {
+    final theme = context.watch<ThemeController>();
+
     return OverlaySupport.global(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Learnify',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF151022)),
-        ),
-        home: const AuthWrapper(), // 🔹 Decide which screen to show
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: theme.themeMode,
+        home: const AuthWrapper(),
       ),
     );
   }
 }
+
 
 // 🔹 This widget decides if the user goes to Login or Home
 class AuthWrapper extends StatefulWidget {
