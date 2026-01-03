@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:learnify/drawer/drawer_widget/header_section.dart';
 import 'package:provider/provider.dart';
 
-import 'package:learnify/auth/screens/login_screen.dart';
+import 'package:learnify/auth/user/screens/login_screen.dart';
 import 'package:learnify/screens/profile/profile_screen_widget/info_card.dart';
 import 'package:learnify/screens/profile/profile_screen_widget/current_user_progress.dart';
 import 'package:learnify/screens/profile/profile_screen_widget/menu_item_tile.dart';
@@ -164,7 +164,7 @@ class ProfileScreen extends StatelessWidget {
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const GoogleLoginScreen(),
+                      builder: (_) => const UserLoginScreen(),
                     ),
                     (_) => false,
                   );

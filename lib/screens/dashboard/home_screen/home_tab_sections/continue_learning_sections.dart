@@ -25,7 +25,6 @@ class ContinueLearningSection extends StatelessWidget {
               fontSize: 18,
             ),
           ),
-
           const SizedBox(height: 12),
 
           SizedBox(
@@ -38,12 +37,12 @@ class ContinueLearningSection extends StatelessWidget {
                   .orderBy('lastAccessed', descending: true)
                   .limit(5)
                   .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+              builder: (context, userSnap) {
+                if (!userSnap.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                if (snapshot.data!.docs.isEmpty) {
+                if (userSnap.data!.docs.isEmpty) {
                   return const Center(
                     child: Text(
                       'No ongoing courses',
@@ -54,34 +53,49 @@ class ContinueLearningSection extends StatelessWidget {
 
                 return ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: snapshot.data!.docs.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 14),
+                  itemCount: userSnap.data!.docs.length,
                   itemBuilder: (context, index) {
-                    final doc = snapshot.data!.docs[index];
-                    final data = doc.data();
+                    final userCourseDoc = userSnap.data!.docs[index];
+                    final courseId = userCourseDoc.id;
+                    final userData = userCourseDoc.data();
 
-                    return LearningCard(
-                      title: data['title'] ?? 'Course',
-                      progress: data['progress'] ?? 0,
-                      gradientStart: Color(
-                        data['gradientStart'] ?? 0xFF6E7179,
-                      ),
-                      gradientEnd: Color(
-                        data['gradientEnd'] ?? 0xFF979C9D,
-                      ),
-                      onTap: () async {
-                        await doc.reference.update({
-                          'lastAccessed': FieldValue.serverTimestamp(),
-                        });
+                    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      future: FirebaseFirestore.instance
+                          .collection('courses')
+                          .doc(courseId)
+                          .get(),
+                      builder: (context, courseSnap) {
+                        if (!courseSnap.hasData ||
+                            !courseSnap.data!.exists) {
+                          return const SizedBox();
+                        }
 
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => CourseDetailScreen(
-                              courseId: doc.id,
-                              course: const {},
-                            ),
-                          ),
+                        final course = courseSnap.data!.data()!;
+
+                        return LearningCard(
+                          title: course['title'] ?? 'Course',
+                          progress: userData['progress'] ?? 0,
+                          gradientStart:
+                              Color(course['gradientStart'] ?? 0xFF6E7179),
+                          gradientEnd:
+                              Color(course['gradientEnd'] ?? 0xFF979C9D),
+                          onTap: () async {
+                            await userCourseDoc.reference.update({
+                              'lastAccessed':
+                                  FieldValue.serverTimestamp(),
+                            });
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CourseDetailScreen(
+                                  courseId: courseId,
+                                  course: course,
+                                ),
+                              ),
+                            );
+                          },
                         );
                       },
                     );

@@ -2,27 +2,27 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:learnify/auth/dialogs/password_dialog.dart';
-import 'package:learnify/auth/services/google_auth.dart';
-import 'package:learnify/auth/services/internet_con.dart';
-import 'package:learnify/auth/widgets/app_logo_section.dart';
-import 'package:learnify/auth/widgets/divider_widget.dart';
-import 'package:learnify/auth/widgets/email_password_form.dart';
-import 'package:learnify/auth/widgets/forgot_password_button.dart';
-import 'package:learnify/auth/widgets/google_signin_button.dart';
-import 'package:learnify/auth/widgets/term_text.dart';
+import 'package:learnify/auth/user/dialogs/password_dialog.dart';
+import 'package:learnify/auth/user/services/google_auth.dart';
+import 'package:learnify/auth/user/services/internet_con.dart';
+import 'package:learnify/auth/user/widgets/app_logo_section.dart';
+import 'package:learnify/auth/user/widgets/divider_widget.dart';
+import 'package:learnify/auth/user/widgets/email_password_form.dart';
+import 'package:learnify/auth/user/widgets/forgot_password_button.dart';
+import 'package:learnify/auth/user/widgets/google_signin_button.dart';
+import 'package:learnify/auth/user/widgets/term_text.dart';
 import 'package:learnify/constants/colors.dart';
 import 'package:learnify/screens/dashboard/dashboard.dart';
 import 'package:learnify/services/streak_service.dart';
 
-class GoogleLoginScreen extends StatefulWidget {
-  const GoogleLoginScreen({super.key});
+class UserLoginScreen extends StatefulWidget {
+  const UserLoginScreen({super.key});
 
   @override
-  State<GoogleLoginScreen> createState() => _GoogleLoginScreenState();
+  State<UserLoginScreen> createState() => _UserLoginScreenState();
 }
 
-class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
+class _UserLoginScreenState extends State<UserLoginScreen> {
   final _auth = FirebaseAuth.instance;
   final _formKey = GlobalKey<FormState>();
   final InternetChecker _checker = InternetChecker();

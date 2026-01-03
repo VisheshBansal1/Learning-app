@@ -10,20 +10,6 @@ import 'theme/app_theme.dart';
 import 'screens/dashboard/dashboard.dart';
 import 'splash_screen/onboarding_wrapper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:overlay_support/overlay_support.dart';
-import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
-import 'firebase_options.dart';
-import 'theme/theme_controller.dart';
-import 'theme/app_theme.dart';
-import 'screens/dashboard/dashboard.dart';
-import 'splash_screen/onboarding_wrapper.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(

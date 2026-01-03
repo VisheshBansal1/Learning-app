@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:learnify/auth/screens/login_screen.dart';
+import 'package:learnify/auth/user/screens/login_screen.dart';
 
 class Section3 extends StatefulWidget {
   const Section3({super.key});
@@ -31,7 +31,7 @@ class _Section3State extends State<Section3> {
       if (context.mounted) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const GoogleLoginScreen()),
+          MaterialPageRoute(builder: (_) => const UserLoginScreen()),
           (route) => false,
         );
         ScaffoldMessenger.of(context).showSnackBar(
@@ -67,7 +67,7 @@ class _Section3State extends State<Section3> {
               context,
               MaterialPageRoute(
                 builder: (context) {
-                  return GoogleLoginScreen();
+                  return UserLoginScreen();
                 },
               ),
             );
